@@ -280,6 +280,13 @@ func (c *Collection) Database() IDatabase {
 
 // DeleteMany implements the ICollection.DeleteMany method.
 func (c *Collection) DeleteMany(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// merge options
 	opt := options.MergeDeleteOptions(opts...)
 
@@ -308,6 +315,12 @@ func (c *Collection) DeleteMany(ctx context.Context, filter interface{}, opts ..
 	// get list
 	list := res.(*Result).Matched
 
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongo.DeleteResult{
 		DeletedCount: int64(len(list)),
 	}, nil
@@ -315,6 +328,11 @@ func (c *Collection) DeleteMany(ctx context.Context, filter interface{}, opts ..
 
 // DeleteOne implements the ICollection.DeleteOne method.
 func (c *Collection) DeleteOne(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// merge options
 	opt := options.MergeDeleteOptions(opts...)
 
@@ -342,6 +360,11 @@ func (c *Collection) DeleteOne(ctx context.Context, filter interface{}, opts ...
 
 	// get list
 	list := res.(*Result).Matched
+
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
 
 	return &mongo.DeleteResult{
 		DeletedCount: int64(len(list)),
@@ -892,6 +915,12 @@ func (c *Collection) Indexes() IIndexView {
 
 // InsertMany implements the ICollection.InsertMany method.
 func (c *Collection) InsertMany(ctx context.Context, documents []interface{}, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// merge options
 	opt := options.MergeInsertManyOptions(opts...)
 
@@ -937,6 +966,12 @@ func (c *Collection) InsertMany(ctx context.Context, documents []interface{}, op
 	// get result
 	result := res.(*Result)
 
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongo.InsertManyResult{
 		InsertedIDs: bsonkit.Pick(result.Modified, "_id", false),
 	}, result.Error
@@ -944,6 +979,11 @@ func (c *Collection) InsertMany(ctx context.Context, documents []interface{}, op
 
 // InsertOne implements the ICollection.InsertOne method.
 func (c *Collection) InsertOne(ctx context.Context, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 	// merge options
 	opt := options.MergeInsertOneOptions(opts...)
 
@@ -977,6 +1017,12 @@ func (c *Collection) InsertOne(ctx context.Context, document interface{}, opts .
 		return nil, result.Error
 	}
 
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongo.InsertOneResult{
 		InsertedID: bsonkit.Get(result.Modified[0], "_id"),
 	}, nil
@@ -989,6 +1035,11 @@ func (c *Collection) Name() string {
 
 // ReplaceOne implements the ICollection.ReplaceOne method.
 func (c *Collection) ReplaceOne(ctx context.Context, filter, replacement interface{}, opts ...*options.ReplaceOptions) (*mongo.UpdateResult, error) {
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 	// merge options
 	opt := options.MergeReplaceOptions(opts...)
 
@@ -1044,6 +1095,12 @@ func (c *Collection) ReplaceOne(ctx context.Context, filter, replacement interfa
 		}, nil
 	}
 
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongo.UpdateResult{
 		MatchedCount:  int64(len(result.Matched)),
 		ModifiedCount: int64(len(result.Modified)),
@@ -1062,6 +1119,11 @@ func (c *Collection) UpdateByID(ctx context.Context, id interface{}, update inte
 
 // UpdateMany implements the ICollection.UpdateMany method.
 func (c *Collection) UpdateMany(ctx context.Context, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 	// merge options
 	opt := options.MergeUpdateOptions(opts...)
 
@@ -1127,6 +1189,12 @@ func (c *Collection) UpdateMany(ctx context.Context, filter, update interface{},
 		}, nil
 	}
 
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mongo.UpdateResult{
 		MatchedCount:  int64(len(result.Matched)),
 		ModifiedCount: int64(len(result.Modified)),
@@ -1135,6 +1203,12 @@ func (c *Collection) UpdateMany(ctx context.Context, filter, update interface{},
 
 // UpdateOne implements the ICollection.UpdateOne method.
 func (c *Collection) UpdateOne(ctx context.Context, filter, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	// begin transaction
+	txn, err := c.engine.Begin(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// merge options
 	opt := options.MergeUpdateOptions(opts...)
 
@@ -1198,6 +1272,12 @@ func (c *Collection) UpdateOne(ctx context.Context, filter, update interface{}, 
 			UpsertedCount: 1,
 			UpsertedID:    bsonkit.Get(result.Upserted, "_id"),
 		}, nil
+	}
+
+	// commit transaction
+	err = c.engine.Commit(txn)
+	if err != nil {
+		return nil, err
 	}
 
 	return &mongo.UpdateResult{
